@@ -25,6 +25,8 @@ find_package(rclada REQUIRED)
 
 ada_begin_package()
 
+ada_import_c_libraries(${rclcpp_LIBRARIES})
+
 ada_add_executables(
         rclada_tf2_examples
         gpr_tf2_ros

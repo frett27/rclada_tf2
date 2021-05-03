@@ -1,3 +1,4 @@
+with "clib_rclcpp";
 with "rosidl";
 with "rcl";
 

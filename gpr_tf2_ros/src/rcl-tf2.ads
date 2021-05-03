@@ -1,6 +1,6 @@
 with ROSIDL.Types;
 
-package RCL.TF2 is
+package RCL.TF2 with Elaborate_Body is
 
    --  Wrap the minimal C++ stuff to comfortably access transforms directly in
    --  Ada
