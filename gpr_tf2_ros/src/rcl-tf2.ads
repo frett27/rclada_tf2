@@ -19,9 +19,12 @@ package RCL.TF2 with Elaborate_Body is
    --  The use of tf2 requires explicit shutdown of the node being used
    --  internally.
 
-   procedure Publish_Static_Transform
+   procedure Publish_Transform
      (From, Into  : String;
       Translation : TF2.Translation;
-      Rotation    : TF2.Rotation);
+      Rotation    : TF2.Rotation;
+      Static      : Boolean := False);
+   --  A static transform is published via static broadcast, and is not
+   --  expected to change (fixed parts of robots).
 
 end RCL.TF2;

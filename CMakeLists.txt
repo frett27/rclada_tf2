@@ -42,6 +42,7 @@ ada_add_executables(
         gpr_tf2_ros
         bin
 
+        dynamic_transform_publisher
         static_transform_publisher
 )
 

@@ -5,7 +5,7 @@ with RCL.TF2;
 
 with ROSIDL.Types;
 
-procedure Static_Transform_Publisher is
+procedure Dynamic_Transform_Publisher is
 
    subtype Real is ROSIDL.Types.Float64;
 
@@ -30,4 +30,4 @@ begin
                          Roll  => Real'Value (Argument (6))));
       delay 1.0;
    end loop;
-end Static_Transform_Publisher;
+end Dynamic_Transform_Publisher;

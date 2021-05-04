@@ -1,21 +1,18 @@
 with C_Strings;
 with GNAT.Ctrl_C;
-with Interfaces.C; use Interfaces;
+with Interfaces.C.Extensions; use Interfaces;
 
 package body RCL.TF2 is
 
-   procedure Dark_Init
-     with Import,
-     Convention => C,
-     External_Name => "rclada_tf2_aux_init";
-   procedure Dark_Spin
-     with Import,
-     Convention => C,
-     External_Name => "rclada_tf2_aux_spin_some";
-   procedure Dark_Shutdown
-     with Import,
-     Convention => C,
-     External_Name => "rclada_tf2_aux_shutdown";
+   task Dark_Node is
+
+      entry Publish_Static_Transform
+        (From, Into  : String;
+         Translation : TF2.Translation;
+         Rotation    : TF2.Rotation;
+         Static      : Boolean);
+
+   end Dark_Node;
 
    --------------
    -- Shutdown --
@@ -28,37 +25,24 @@ package body RCL.TF2 is
       Shutdown_Requested := True;
    end Shutdown;
 
-   ------------------------------
-   -- Publish_Static_Transform --
-   ------------------------------
+   -----------------------
+   -- Publish_Transform --
+   -----------------------
 
-   procedure Publish_Static_Transform
+   procedure Publish_Transform
      (From, Into  : String;
       Translation : TF2.Translation;
-      Rotation    : TF2.Rotation)
+      Rotation    : TF2.Rotation;
+      Static      : Boolean := False)
    is
-      procedure Dark_Publish (X, Y, Z, Yaw, Pitch, Roll : ROSIDL.Types.Float64;
-                              From, To                  : C.Strings.chars_ptr)
-        with Import,
-        Convention => C,
-        External_Name => "rclada_tf2_aux_publish_static_transform";
    begin
-      Dark_Init;
+      if Shutdown_Requested then
+         return;
+      end if;
 
-      --  Must be installed after rclcpp installs theirs, or ours is ignored
-      GNAT.Ctrl_C.Install_Handler (Shutdown'Access);
-
-      Dark_Publish (Translation.X, Translation.Y, Translation.Z,
-                    Rotation.Yaw, Rotation.Pitch, Rotation.Roll,
-                    C_Strings.To_C (From).To_Ptr,
-                    C_Strings.To_C (Into).To_Ptr);
-
-      while not Shutdown_Requested loop
-         Dark_Spin;
-      end loop;
-      Dark_Shutdown;
-
-   end Publish_Static_Transform;
+      Dark_Node.Publish_Static_Transform
+        (From, Into, Translation, Rotation, Static);
+   end Publish_Transform;
 
    --------------
    -- Aux_Node --
@@ -68,9 +52,27 @@ package body RCL.TF2 is
    --  our own Ada node. Unfortunately, the tf2_ros C++ API is not written with
    --  simple reuse (i.e. not involving a C++ node) in mind.
 
-   task type Aux_Node with unreferenced;
+   task body Dark_Node is
 
-   task body Aux_Node is
+      procedure Dark_Init
+        with Import,
+        Convention => C,
+        External_Name => "rclada_tf2_aux_init";
+      procedure Dark_Publish (Static                    : C.Extensions.bool;
+                              X, Y, Z, Yaw, Pitch, Roll : ROSIDL.Types.Float64;
+                              From, To                  : C.Strings.chars_ptr)
+        with Import,
+        Convention => C,
+        External_Name => "rclada_tf2_aux_publish_transform";
+      procedure Dark_Spin_Some
+        with Import,
+        Convention => C,
+        External_Name => "rclada_tf2_aux_spin_some";
+      procedure Dark_Shutdown
+        with Import,
+        Convention => C,
+        External_Name => "rclada_tf2_aux_shutdown";
+
    begin
       Dark_Init;
 
@@ -78,9 +80,27 @@ package body RCL.TF2 is
       GNAT.Ctrl_C.Install_Handler (Shutdown'Access);
 
       while not Shutdown_Requested loop
-         Dark_Spin;
+         select
+            accept Publish_Static_Transform
+              (From        : String;
+               Into        : String;
+               Translation : TF2.Translation;
+               Rotation    : TF2.Rotation;
+               Static      : Boolean)
+            do
+               Dark_Publish
+                 (C.Extensions.bool (Static),
+                  Translation.X, Translation.Y, Translation.Z,
+                  Rotation.Yaw, Rotation.Pitch, Rotation.Roll,
+                  C_Strings.To_C (From).To_Ptr, C_Strings.To_C (Into).To_Ptr);
+            end Publish_Static_Transform;
+         else
+            Dark_Spin_Some;
+            delay 0.001; -- Is there really no better solution?
+         end select;
       end loop;
+
       Dark_Shutdown;
-   end Aux_Node;
+   end Dark_Node;
 
 end RCL.TF2;
