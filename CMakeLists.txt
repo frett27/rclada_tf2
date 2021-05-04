@@ -17,12 +17,19 @@ endif()
 
 # find dependencies
 find_package(ament_cmake REQUIRED)
+find_package(geometry_msgs REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(tf2_msgs REQUIRED)
 find_package(tf2_ros REQUIRED)
 find_package(rclada_common REQUIRED)
 find_package(rosidl_generator_ada REQUIRED)
 find_package(rclada REQUIRED)
+
+add_executable(static_pub cpp_tests/static_pub.cpp)
+ament_target_dependencies(static_pub rclcpp geometry_msgs tf2_msgs tf2_ros)
+install(TARGETS
+  static_pub
+  DESTINATION lib/${PROJECT_NAME})
 
 ada_begin_package()
 

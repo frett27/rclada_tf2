@@ -4,6 +4,30 @@ with Interfaces.C; use Interfaces;
 
 package body RCL.TF2 is
 
+   procedure Dark_Init
+     with Import,
+     Convention => C,
+     External_Name => "rclada_tf2_aux_init";
+   procedure Dark_Spin
+     with Import,
+     Convention => C,
+     External_Name => "rclada_tf2_aux_spin_some";
+   procedure Dark_Shutdown
+     with Import,
+     Convention => C,
+     External_Name => "rclada_tf2_aux_shutdown";
+
+   --------------
+   -- Shutdown --
+   --------------
+
+   Shutdown_Requested : Boolean := False;
+
+   procedure Shutdown is
+   begin
+      Shutdown_Requested := True;
+   end Shutdown;
+
    ------------------------------
    -- Publish_Static_Transform --
    ------------------------------
@@ -19,22 +43,22 @@ package body RCL.TF2 is
         Convention => C,
         External_Name => "rclada_tf2_aux_publish_static_transform";
    begin
+      Dark_Init;
+
+      --  Must be installed after rclcpp installs theirs, or ours is ignored
+      GNAT.Ctrl_C.Install_Handler (Shutdown'Access);
+
       Dark_Publish (Translation.X, Translation.Y, Translation.Z,
                     Rotation.Yaw, Rotation.Pitch, Rotation.Roll,
                     C_Strings.To_C (From).To_Ptr,
                     C_Strings.To_C (Into).To_Ptr);
+
+      while not Shutdown_Requested loop
+         Dark_Spin;
+      end loop;
+      Dark_Shutdown;
+
    end Publish_Static_Transform;
-
-   --------------
-   -- Shutdown --
-   --------------
-
-   Shutdown_Requested : Boolean := False;
-
-   procedure Shutdown is
-   begin
-      Shutdown_Requested := True;
-   end Shutdown;
 
    --------------
    -- Aux_Node --
@@ -44,21 +68,9 @@ package body RCL.TF2 is
    --  our own Ada node. Unfortunately, the tf2_ros C++ API is not written with
    --  simple reuse (i.e. not involving a C++ node) in mind.
 
-   task Aux_Node;
+   task type Aux_Node with unreferenced;
 
    task body Aux_Node is
-      procedure Dark_Init
-        with Import,
-        Convention => C,
-        External_Name => "rclada_tf2_aux_init";
-      procedure Dark_Spin
-        with Import,
-        Convention => C,
-        External_Name => "rclada_tf2_aux_spin_some";
-      procedure Dark_Shutdown
-        with Import,
-        Convention => C,
-        External_Name => "rclada_tf2_aux_shutdown";
    begin
       Dark_Init;
 
