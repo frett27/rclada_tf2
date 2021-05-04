@@ -1,4 +1,7 @@
 with "clib_rclcpp";
+with "clib_static_transform_broadcaster_node";
+with "clib_tf2_msgs_rosidl_typesupport_cpp";
+with "clib_tf2_ros";
 with "rosidl";
 with "rcl";
 

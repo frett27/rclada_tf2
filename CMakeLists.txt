@@ -18,6 +18,7 @@ endif()
 # find dependencies
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
+find_package(tf2_msgs REQUIRED)
 find_package(tf2_ros REQUIRED)
 find_package(rclada_common REQUIRED)
 find_package(rosidl_generator_ada REQUIRED)
@@ -26,6 +27,8 @@ find_package(rclada REQUIRED)
 ada_begin_package()
 
 ada_import_c_libraries(${rclcpp_LIBRARIES})
+ada_import_c_libraries(${tf2_msgs_LIBRARIES})
+ada_import_c_libraries(${tf2_ros_LIBRARIES})
 
 ada_add_executables(
         rclada_tf2_examples

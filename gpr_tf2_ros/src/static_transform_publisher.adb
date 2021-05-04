@@ -16,13 +16,17 @@ begin
       return;
    end if;
 
-   RCL.TF2.Publish_Static_Transform
-     (From        => Argument (7),
-      Into        => Argument (8),
-      Translation => (X => Real'Value (Argument (1)),
-                      Y => Real'Value (Argument (2)),
-                      Z => Real'Value (Argument (3))),
-      Rotation    => (Yaw   => Real'Value (Argument (4)),
-                      Pitch => Real'Value (Argument (5)),
-                      Roll  => Real'Value (Argument (6))));
+   while True loop
+      Put_Line ("Publishing transform...");
+      RCL.TF2.Publish_Static_Transform
+        (From        => Argument (7),
+         Into        => Argument (8),
+         Translation => (X => Real'Value (Argument (1)),
+                         Y => Real'Value (Argument (2)),
+                         Z => Real'Value (Argument (3))),
+         Rotation    => (Yaw   => Real'Value (Argument (4)),
+                         Pitch => Real'Value (Argument (5)),
+                         Roll  => Real'Value (Argument (6))));
+      delay 1.0;
+   end loop;
 end Static_Transform_Publisher;

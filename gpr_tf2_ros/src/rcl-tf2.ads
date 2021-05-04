@@ -15,6 +15,10 @@ package RCL.TF2 with Elaborate_Body is
       Yaw, Pitch, Roll : Radians;
    end record;
 
+   procedure Shutdown;
+   --  The use of tf2 requires explicit shutdown of the node being used
+   --  internally.
+
    procedure Publish_Static_Transform
      (From, Into  : String;
       Translation : TF2.Translation;
