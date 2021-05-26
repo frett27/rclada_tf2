@@ -1,46 +1,52 @@
+#include <rclada_tf2_dark.hpp>
+
 #include <cstdio>
 #include <exception>
+#include <geometry_msgs/msg/vector3.h>
 #include <rclcpp/rclcpp.hpp>
 #include <tf2/LinearMath/Quaternion.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+#include <tf2_ros/buffer.h>
 #include <tf2_ros/static_transform_broadcaster.h>
 #include <tf2_ros/transform_broadcaster.h>
+#include <tf2_ros/transform_listener.h>
 
-namespace rclada_tf2_aux {
+extern int    gnat_argc;
+extern char **gnat_argv;
 
-  std::shared_ptr<rclcpp::Node> node;
+namespace rclada_tf2_dark {
+
+  rclcpp::Node::SharedPtr node;
   std::shared_ptr<tf2_ros::StaticTransformBroadcaster> static_broadcaster;
   std::shared_ptr<tf2_ros::TransformBroadcaster> dynamic_broadcaster;
+  std::shared_ptr<tf2_ros::TransformListener> listener;
+  tf2_ros::Buffer *buffer;
 
+  bool dark_can_transform(char *target, char *source) {
+    return buffer->canTransform(target, source, tf2::get_now());
+  }
 
-}
-
-//  Glue to easily call from Ada
-
-extern "C" {
-
-  using namespace rclada_tf2_aux;
-
-  extern int    gnat_argc;
-  extern char **gnat_argv;
-
-  void rclada_tf2_aux_init() {
+  void dark_init() {
     rclcpp::init(gnat_argc, gnat_argv);
-    node = std::make_shared<rclcpp::Node>("asdfhaksd"); // TODO: randomize
+
+    node = rclcpp::Node::make_shared
+             ("rclada_tf2_dark_" + std::to_string(std::rand()));
+
     static_broadcaster =
-      std::make_shared<tf2_ros::StaticTransformBroadcaster>(node);
+       std::make_shared<tf2_ros::StaticTransformBroadcaster>(node);
     dynamic_broadcaster =
- 	    std::make_shared<tf2_ros::TransformBroadcaster>(node);
+       std::make_shared<tf2_ros::TransformBroadcaster>(node);
+
+    buffer = new tf2_ros::Buffer(node->get_clock());
+    listener =
+       std::make_shared<tf2_ros::TransformListener>(*buffer);
   }
 
-  void rclada_tf2_aux_spin_some() {
-    rclcpp::spin_some (node);
-  }
-
-  void rclada_tf2_aux_shutdown() {
+  void dark_shutdown() {
     rclcpp::shutdown();
   }
 
-  void rclada_tf2_aux_publish_transform
+  void dark_publish_transform
     (bool publish_statically,
      double x, double y, double z, double yaw, double pitch, double roll,
      char *from, char *to)
@@ -73,6 +79,18 @@ extern "C" {
     } catch(std::exception &e) {
       printf("EX: %s\n", e.what());
     }
+  }
+
+  Point3D dark_transform(Point3D point, char * target, char * source) {
+    using namespace geometry_msgs;
+    msg::Vector3Stamped in;
+    in.header.frame_id = source;
+    in.vector.x = point.x;
+    in.vector.y = point.y;
+    in.vector.z = point.z;
+    msg::Vector3Stamped result =
+      buffer->transform<msg::Vector3Stamped> (in, target);
+    return { result.vector.x, result.vector.y, result.vector.z };
   }
 
 }

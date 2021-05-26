@@ -5,9 +5,10 @@ with RCL.TF2;
 
 with ROSIDL.Types;
 
-procedure Dynamic_Transform_Publisher is
+procedure Static_Transform_Publisher is
 
    subtype Real is ROSIDL.Types.Float64;
+   subtype Radians is RCL.TF2.Radians;
 
 begin
    if Argument_Count /= 8 then
@@ -25,9 +26,9 @@ begin
          Translation => (X => Real'Value (Argument (1)),
                          Y => Real'Value (Argument (2)),
                          Z => Real'Value (Argument (3))),
-         Rotation    => (Yaw   => Real'Value (Argument (4)),
-                         Pitch => Real'Value (Argument (5)),
-                         Roll  => Real'Value (Argument (6))));
+         Rotation    => (Yaw   => Radians'Value (Argument (4)),
+                         Pitch => Radians'Value (Argument (5)),
+                         Roll  => Radians'Value (Argument (6))));
       delay 1.0;
    end loop;
-end Dynamic_Transform_Publisher;
+end Static_Transform_Publisher;
